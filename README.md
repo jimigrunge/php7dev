@@ -1,48 +1,6 @@
 ## Summary
-php7dev is a Debian 8 [Vagrant image](https://atlas.hashicorp.com/rasmus/boxes/php7dev) which is preconfigured for testing PHP apps and developing extensions across many versions of PHP.
+php7dev is a Debian 8 [Vagrant image](https://atlas.hashicorp.com/rasmus/boxes/php7dev) which is preconfigured for testing PHP apps and developing extensions across many versions of PHP. See the [Changelog](#changelog).
 
-## Changes in 0.1.0
-- Updated all PHP builds to the latest
-- Updated all Debian packages
-- Added PHP 7.1 builds bringing the total builds included to 24
-- Added php-fpm systemd support
-- Included pear and pecl tools
-- Enabled the PHP 7 file-based opcache cache
-- Fully supported Apache in newphp version switching
-- Added AST extension to PHP 7 builds
-- Added phan static analyzer
-- Added memcached extension to all versions
-- Added raphf, propro and http extensions to all versions
-
-## Changes in 0.0.9
-- Upgraded the base image OS from Debian 7.8 to 8.0 and recompiled all 20 PHP builds
-- Added PosgreSQL support to all builds
-- newphp will now switch the Apache module between PHP 5 and PHP 7 (default is still nginx)
-- Added ack
-- Updated virtualbox guest-additions
-
-## Changes in 0.0.8
-- Fix double-entry in /etc/network/interfaces
-
-## Changes in 0.0.7
-- Try to fix vagrant ssh issue by adding new insecure vagrant key
-
-## Changes in 0.0.6
-- Default PHP version is 7 again
-- Use -j2 in makephp since the vm is configured for 2 CPUs
-- Updated composer
-- Put image version in /etc/motd
-
-## Changes in 0.0.5
-- dist-upgraded all Debian packages
-- Updated newphp script - no longer need to sudo
-- Added makephp script
-- Added src/mysql checkout from pecl
-- Rebuilt all PHP versions
-- Added phpdbg to PHP 7.0 builds
-- Updated Valgrind .suppressions file
-- Re-installed headers as per https://github.com/rlerdorf/php7dev/issues/4
-- Installed strace
 
 ## Installation
 
@@ -50,11 +8,13 @@ Download and install [Virtualbox](https://www.virtualbox.org/wiki/Downloads)
 
 Download and install [Vagrant](https://www.vagrantup.com/downloads.html)
 
+If you are on Windows, download and install [Git](https://git-scm.com/download/win)
+
 Make sure you are at least at Vagrant version 1.5 or the steps below may not work for you.
 
-If you are on Windows use the [Manual Install](#manual-install) instructions.
+If you are on Windows use the [Manual Install](#manual-install) instructions or use git-bash.
 
-Otherwise for UNIX and UNIX-like users just clone and go. Like this: 
+Otherwise for UNIX and UNIX-like users just clone and go. Like this:
 
 ```
 $ git clone https://github.com/rlerdorf/php7dev.git
@@ -72,7 +32,7 @@ Add this to your hosts file:
 192.168.7.7 php7dev
 ```
 
-There are also various vagrant plugins that can help you update your dns. See [local-domain-resolution](https://github.com/mitchellh/vagrant/wiki/Available-Vagrant-Plugins#local-domain-resolution).  
+There are also various vagrant plugins that can help you update your dns. See [local-domain-resolution](https://github.com/mitchellh/vagrant/wiki/Available-Vagrant-Plugins#local-domain-resolution).
 
 At this point you should be able to point your  browser at:
 
@@ -83,7 +43,7 @@ http://php7dev/
 and it should show the PHP7 phpinfo() page.
 
 The box will also fetch an ip via DHCP so it will be on your local network like any other machine.
-This also means you don't need to use **vagrant ssh** anymore. 
+This also means you don't need to use **vagrant ssh** anymore.
 
 ## Manual Install
 
@@ -190,6 +150,75 @@ $ sudo apachectl start
 
 Running **newphp** will correctly enable the specified PHP version and restart Apache for you.
 
+There are a couple of other convenience scripts. **makeext** in an extension's directory will
+build and install that extension for the specified version of PHP. For example:
+
+```
+vagrant@php7dev:~$ cd src
+vagrant@php7dev:~/src$ git clone https://github.com/phpredis/phpredis.git
+Cloning into 'phpredis'...
+vagrant@php7dev:~/src$ cd phpredis/
+vagrant@php7dev:~/src/phpredis$ git checkout php7
+Branch php7 set up to track remote branch php7 from origin.
+Switched to a new branch 'php7'
+vagrant@php7dev:~/src/phpredis$ makeext 7
+Build log in /tmp/build.log
+Building extension for PHP 7
+configuring...
+compiling...
+installing...
+done
+Building PHP 7-debug
+configuring...
+compiling...
+installing...
+done
+vagrant@php7dev:~/src/phpredis$ makeext 71
+Build log in /tmp/build.log
+Building extension for PHP 71
+configuring...
+compiling...
+installing...
+done
+Building PHP 71-debug
+configuring...
+compiling...
+installing...
+done
+```
+
+And a second helper script, **phpext** enables or disables an extension for the current version of PHP.
+eg.
+
+```
+vagrant@php7dev:~/src/phpredis$ newphp 70
+Activating PHP 7.0.12-dev (cli) (built: Sep  6 2016 04:47:05) ( NTS ) and restarting php-fpm
+vagrant@php7dev:~/src/phpredis$ phpext enable redis
+Restarting php-fpm...
+vagrant@php7dev:~/src/phpredis$ php -m | grep redis
+redis
+```
+
+or
+
+```
+vagrant@php7dev:~$ newphp 71
+Activating PHP 7.1.0-dev (cli) (built: Sep  6 2016 04:38:13) ( NTS ) and restarting php-fpm
+vagrant@php7dev:~$ phpext list
+Available extensions for PHP 7.1.0-dev:
+ast (enabled)
+http (enabled)
+mailparse
+memcached (enabled)
+mysql (enabled)
+redis (enabled)
+ssh2
+xdebug (enabled)
+vagrant@php7dev:~$ phpext disable xdebug
+Restarting php-fpm...
+xdebug disabled
+```
+
 ## Installing phpBB
 
 Now you can install something. The sites live in */var/www*.
@@ -264,7 +293,7 @@ Add shared folders by adding them to the folders section in the php7dev.yaml con
 
 ## Toggle Public Network
 
-By default the vagrant machine will use DHCP to be accessible over the local network. This can be disabled in the php7dev.yaml configuration file. 
+By default the vagrant machine will use DHCP to be accessible over the local network. This can be disabled in the php7dev.yaml configuration file.
 
 ## Add MySQL databases
 
@@ -368,3 +397,56 @@ And a tiny apt primer:
 * upgrade installed: **apt-get upgrade**
 
 If something isn't working or you have suggestions, please let me know here.
+
+# Changelog
+
+## Changes in 1.0.0
+- Upgrade to Vagrant 1.8.5
+- Updated all PHP builds to the latest
+- Updated all Debian packages
+- Added phpext script to enable/disable extensions
+- Added xdebug, yaml, stats and redis extensions
+- Big Phan update
+
+## Changes in 0.1.0
+- Updated all PHP builds to the latest
+- Updated all Debian packages
+- Added PHP 7.1 builds bringing the total builds included to 24
+- Added php-fpm systemd support
+- Included pear and pecl tools
+- Enabled the PHP 7 file-based opcache cache
+- Fully supported Apache in newphp version switching
+- Added AST extension to PHP 7 builds
+- Added Phan static analyzer
+- Added memcached extension to all versions
+- Added raphf, propro and http extensions to all versions
+
+## Changes in 0.0.9
+- Upgraded the base image OS from Debian 7.8 to 8.0 and recompiled all 20 PHP builds
+- Added PosgreSQL support to all builds
+- newphp will now switch the Apache module between PHP 5 and PHP 7 (default is still nginx)
+- Added ack
+- Updated virtualbox guest-additions
+
+## Changes in 0.0.8
+- Fix double-entry in /etc/network/interfaces
+
+## Changes in 0.0.7
+- Try to fix vagrant ssh issue by adding new insecure vagrant key
+
+## Changes in 0.0.6
+- Default PHP version is 7 again
+- Use -j2 in makephp since the vm is configured for 2 CPUs
+- Updated composer
+- Put image version in /etc/motd
+
+## Changes in 0.0.5
+- dist-upgraded all Debian packages
+- Updated newphp script - no longer need to sudo
+- Added makephp script
+- Added src/mysql checkout from pecl
+- Rebuilt all PHP versions
+- Added phpdbg to PHP 7.0 builds
+- Updated Valgrind .suppressions file
+- Re-installed headers as per https://github.com/rlerdorf/php7dev/issues/4
+- Installed strace
